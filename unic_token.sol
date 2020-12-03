@@ -464,15 +464,13 @@ contract Ownable is Context {
  * We have added 6 variables
  * - `txFee` [line 78] the transaction fee to be applied.
  * - `feeDistributor` [line 79] the contract address to recieve the fees.
- * - 'OwnerFee' Owner takes 2% fee for every transfer done
  * - `feelessSender` [line 82] map containing senders who will not have txFees applied.
  * - `feelessReciever` [line 83] map containing recipients who will not have txFee applied.
  * - `canWhitelist` [line 85] map containing recipients who will not have txFee applied.
  *
  * We have added 6 simple functions
  * - `setFee` [line 235] set new transaction fee.
- * - `setFeeDistributor` [line 240] sets new address to recieve txFees
- * - `setFeelessSender` [line 245] to enable/disable fees for a given sender.
+  * - `setFeelessSender` [line 245] to enable/disable fees for a given sender.
  * - `setFeelessReciever` [line 251] to enable/disable fees for a given recipient.
  * - `renounceWhitelist` [line 257] disables adding to whitelist forever.
  * - `calculateAmountsAfterFee` [line 262] to caclulate the amounts after fees have been applied.
@@ -678,12 +676,7 @@ contract DeflationaryERC20 is Context, IERC20, Ownable {
         return true;
     }
 
-    // assign a new transactionfee
-    function setFee(uint8 _newTxFee) public onlyOwner {
-        txFee = _newTxFee;
-    }
     
-   
     // assign a new fee distributor address
     function setFeeDistributor(address _distributor) public onlyOwner {
         feeDistributor = _distributor;
