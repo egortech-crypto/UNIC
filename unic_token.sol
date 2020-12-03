@@ -1,15 +1,9 @@
-/**
- *Submitted for verification at Etherscan.io on 2020-11-26
-*/
 
 // Partial License: MIT
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.7.5;
 
-/*
- * HYPE FINANCE Smart contract for Hype.Bet produced by ????? ?????
- *
- */
+
 abstract contract Context {
     function _msgSender() internal view virtual returns (address payable) {
         return msg.sender;
