@@ -1,4 +1,5 @@
 
+
 // Partial License: MIT
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.7.5;
@@ -850,15 +851,9 @@ contract DeflationaryERC20 is Context, IERC20, Ownable {
 }
 
 
-/**
- * The Hype_Bet Token itself is just a standard ERC20, with:
- * No minting.
- * .
- * Transfer fee applied.
- */
-contract Hype_Bet is DeflationaryERC20 {
+contract Union_Capital_token is DeflationaryERC20 {
 
-    constructor() DeflationaryERC20("Hype.Bet", "Hype.Bet") {
+    constructor() DeflationaryERC20("union capital", "UNIC") {
         
         _mint(msg.sender, 1000000e18);
     }
