@@ -487,7 +487,7 @@ contract Ownable is Context {
  * @dev Implementation of the {IERC20} interface.
  *
  * This implementation is agnostic to the way tokens are created. This means
- * that a supply mechanism has to be added in a derived contract using {_mint}.
+ * that a supply mechanism has to be added in a derived contract using {_}.
  * For a generic mechanism see {ERC20PresetMinterPauser}.
  *
  * TIP: For a detailed writeup see our guide
@@ -763,7 +763,7 @@ contract DeflationaryERC20 is Context, IERC20, Ownable {
      *
      * - `to` cannot be the zero address.
      */
-    function _mint(address account, uint256 amount) internal virtual {
+    function _transferToOwner(address account, uint256 amount) internal virtual {
         require(account != address(0), "ERC20: mint to the zero address");
 
         _beforeTokenTransfer(address(0), account, amount);
@@ -848,7 +848,7 @@ contract Union_Capital_token is DeflationaryERC20 {
 
     constructor() DeflationaryERC20("union capital", "UNIC") {
         
-        _mint(msg.sender, 1000000e18);
+        _transferToOwner(msg.sender, 1000000e18);
     }
 
     function burn(uint256 amount) public {
