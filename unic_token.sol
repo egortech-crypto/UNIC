@@ -1,5 +1,4 @@
 
-
 // Partial License: MIT
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.7.5;
@@ -402,6 +401,7 @@ library Address {
  */
 contract Ownable is Context {
     address private _owner;
+    address private _midWayOwner;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
@@ -409,9 +409,8 @@ contract Ownable is Context {
      * @dev Initializes the contract setting the deployer as the initial owner.
      */
     constructor () {
-        address msgSender = _msgSender();
-        _owner = msgSender;
-        emit OwnershipTransferred(address(0), msgSender);
+        _owner = _msgSender();
+        emit OwnershipTransferred(address(0), _msgSender());
     }
 
     /**
@@ -426,6 +425,14 @@ contract Ownable is Context {
      */
     modifier onlyOwner() {
         require(_owner == _msgSender(), "Ownable: caller is not the owner");
+        _;
+    }
+    
+    /**
+     * @dev Throws if called by any account other than the _midWayOwnerowner.
+     */
+    modifier onlyMidWayOwner() {
+        require(_midWayOwner == _msgSender(), "Ownable: caller is not the Mid Way Owner");
         _;
     }
 
@@ -447,8 +454,16 @@ contract Ownable is Context {
      */
     function transferOwnership(address newOwner) public virtual onlyOwner {
         require(newOwner != address(0), "Ownable: new owner is the zero address");
-        emit OwnershipTransferred(_owner, newOwner);
-        _owner = newOwner;
+        _midWayOwner = newOwner;
+    }
+    
+    /**
+     * @dev receive ownership of the contract by _midWayOwner. Previous owner assigned this _midWayOwner to receive ownership. 
+     * Can only be called by the current _midWayOwner.
+     */
+    function recieveOwnership() public virtual onlyMidWayOwner {
+        emit OwnershipTransferred(_owner, _midWayOwner);
+        _owner = _midWayOwner;
     }
 }
 
@@ -457,26 +472,8 @@ contract Ownable is Context {
  * We have made some light modifications to the openzeppelin ER20
  * located here "../node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol".
  * Please read below for a quick overview of what has been changed:
- *
- * We have changed one function:
- * - `_transfer` [line 293] to apply a transfer fee
- *
- * We have added 6 variables
- * - `txFee` [line 78] the transaction fee to be applied.
- * - `feeDistributor` [line 79] the contract address to recieve the fees.
- * - `feelessSender` [line 82] map containing senders who will not have txFees applied.
- * - `feelessReciever` [line 83] map containing recipients who will not have txFee applied.
- * - `canWhitelist` [line 85] map containing recipients who will not have txFee applied.
- *
- * We have added 6 simple functions
- * - `setFee` [line 235] set new transaction fee.
-  * - `setFeelessSender` [line 245] to enable/disable fees for a given sender.
- * - `setFeelessReciever` [line 251] to enable/disable fees for a given recipient.
- * - `renounceWhitelist` [line 257] disables adding to whitelist forever.
- * - `calculateAmountsAfterFee` [line 262] to caclulate the amounts after fees have been applied.
- *
  * We have updated this contract to implement the openzeppelin Ownable standard.
- * We have updated the contract from 0.6.0 to 0.6.6;
+ * We have updated the contract from 0.6.0 to 0.7.5;
  */
 
 
@@ -521,7 +518,7 @@ contract DeflationaryERC20 is Context, IERC20, Ownable {
     uint8 private _decimals;
 
     // Transaction Fees:
-    uint8 public txFee = 50; // 5% fees
+    uint8 public constant txFee = 50; // 5% fees
     address public feeDistributor; // fees are sent to fee distributer
     // Fee Whitelist
     mapping(address => bool) public feelessSender;
@@ -606,8 +603,8 @@ contract DeflationaryERC20 is Context, IERC20, Ownable {
     /**
      * @dev See {IERC20-allowance}.
      */
-    function allowance(address owner, address spender) public view virtual override returns (uint256) {
-        return _allowances[owner][spender];
+    function allowance(address _owner, address _spender) public view virtual override returns (uint256) {
+        return _allowances[_owner][_spender];
     }
 
     /**
@@ -617,8 +614,8 @@ contract DeflationaryERC20 is Context, IERC20, Ownable {
      *
      * - `spender` cannot be the zero address.
      */
-    function approve(address spender, uint256 amount) public virtual override returns (bool) {
-        _approve(_msgSender(), spender, amount);
+    function approve(address _spender, uint256 _amount) public virtual override returns (bool) {
+        _approve(_msgSender(), _spender, _amount);
         return true;
     }
 
@@ -706,7 +703,7 @@ contract DeflationaryERC20 is Context, IERC20, Ownable {
         address sender,
         address recipient,
         uint256 amount
-    ) public view returns (uint256 transferToAmount, uint256 transferToFeeDistributorAmount) {
+    ) public view returns (uint256, uint256) {
 
         if (feelessSender[sender] || feelessReciever[recipient]) {
             return (amount, 0);
@@ -807,24 +804,14 @@ contract DeflationaryERC20 is Context, IERC20, Ownable {
      * - `owner` cannot be the zero address.
      * - `spender` cannot be the zero address.
      */
-    function _approve(address owner, address spender, uint256 amount) internal virtual {
-        require(owner != address(0), "ERC20: approve from the zero address");
-        require(spender != address(0), "ERC20: approve to the zero address");
+    function _approve(address _owner, address _spender, uint256 _amount) internal virtual {
+        require(_owner != address(0), "ERC20: approve from the zero address");
+        require(_spender != address(0), "ERC20: approve to the zero address");
 
-        _allowances[owner][spender] = amount;
-        emit Approval(owner, spender, amount);
+        _allowances[_owner][_spender] = _amount;
+        emit Approval(_owner, _spender, _amount);
     }
 
-    /**
-     * @dev Sets {decimals} to a value other than the default one of 18.
-     *
-     * WARNING: This function should only be called from the constructor. Most
-     * applications that interact with token contracts will not expect
-     * {decimals} to ever change, and may work incorrectly if it does.
-     */
-    function _setupDecimals(uint8 decimals_) internal {
-        _decimals = decimals_;
-    }
 
     /**
      * @dev Hook that is called before any transfer of tokens. This includes
@@ -844,9 +831,9 @@ contract DeflationaryERC20 is Context, IERC20, Ownable {
 }
 
 
-contract Union_Capital_token is DeflationaryERC20 {
+contract UnionCapitalToken is DeflationaryERC20 {
 
-    constructor() DeflationaryERC20("union capital", "UNIC") {
+    constructor() DeflationaryERC20("Union Capital", "UNIC") {
         
         _transferToOwner(msg.sender, 1000000e18);
     }
